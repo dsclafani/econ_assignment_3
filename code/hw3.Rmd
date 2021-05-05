@@ -16,45 +16,72 @@ library(janitor)
 # load data
 data <- read_csv(here("data", "HW3_data.csv")) %>% 
   clean_names()
-
+ 
+plot_data <- data %>% 
+  gather(income_group, gallons_demanded, q_low_gallons:q_high_gallons) #gathering data by new column we named income group, and put the inflow from q_low_gallins and q_high_gallons into a new column called gallons_demanded
 
 #plotting the data
 
-ggplot(data = data, aes(y = price_dollars, x = q_low_gallons)) + geom_point(color = "blue")+
-  geom_point(data = data, aes(y= price_dollars, x= q_high_gallons), color = "red")+
-  labs(x = "Quantity", y = "Price")+
-  theme_minimal()
+scatter_demand <- ggplot(data = plot_data, aes(y = price_dollars, x = gallons_demanded)) + geom_point()+
+  facet_wrap(~income_group)+
+  geom_smooth(method = lm)
+
+
+scatter_demand
 
 ```
 
 ### Linear Model    
 ```{r}
 
-model_low <- lm(price_dollars ~ q_low_gallons, data = data)
+model_low <- lm(price_dollars ~ q_low_gallons, data = data) #created the linear models based on the data we have
 model_high <- lm(price_dollars ~ q_high_gallons, data = data)
 
-# prediction functions
+# prediction functions- creating the function
 
-predict_curve <- function(gas, model){
-  b0 <-model$coefficients[1]
+predict_curve <- function(gallons, model){
+  bO <-model$coefficients[1]
   b1 <- model$coefficients[2]
   
-  predicted_curve <- b0 +b1*gas
+  predicted_curve <- bO +b1*gallons
+  
   return(as.numeric(predicted_curve))
 }
 
-# creating a vector to put into the linear model
+# creating a vector to put into the linear model - from 0 to 500000
 
-gas_q <- seq(0, 150, length.out = 150)
+gallons_q <- seq(0, 500000, length.out = 500000)
 
 
-# predict linear Marginal Benefit curves of gasoline for each income group and store as data frames. data frames names are high and low
+# predict linear Demand curves of gasoline for each income group and store as data frames. data frames names are high and low
 
-high <- bind_cols(gas_q = gas_q,
-                  linear_mb = predict_curve(gas_q, model_high), sector = "high")
+high <- bind_cols(gallons_q = gallons_q,
+                  linear_price = predict_curve(gallons_q, model_high), income_group = "high") #use the function you made above, the vector from 1 to and the model you made from the available data to predict the linear line (linear because you ran a linear model above)
 
-low <- bind_cols(gas_q = gas_q,
-                  linear_mb = predict_curve(gas_q, model_low), sector = "low")
+low <- bind_cols(gallons_q = gallons_q,
+                  linear_price = predict_curve(gallons_q, model_low), income_group = "low")
 
 predict_mb_gas <- bind_rows(high, low) #combines the two predicted curves into one data frame
+
 ```
+
+
+```{r}
+## Plot predicted Demand curves
+
+ggplot(data = predict_mb_gas, aes(x = gallons_q, y = linear_price)) + geom_line()+
+  facet_wrap(~income_group)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
