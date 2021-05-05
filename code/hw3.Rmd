@@ -1,0 +1,60 @@
+---
+title: "hw_3_code"
+author: "Danielle Sclafani"
+date: "5/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+```{r}
+# load data
+data <- read_csv(here("data", "HW3_data.csv")) %>% 
+  clean_names()
+
+
+#plotting the data
+
+ggplot(data = data, aes(y = price_dollars, x = q_low_gallons)) + geom_point(color = "blue")+
+  geom_point(data = data, aes(y= price_dollars, x= q_high_gallons), color = "red")+
+  labs(x = "Quantity", y = "Price")+
+  theme_minimal()
+
+```
+
+### Linear Model    
+```{r}
+
+model_low <- lm(price_dollars ~ q_low_gallons, data = data)
+model_high <- lm(price_dollars ~ q_high_gallons, data = data)
+
+# prediction functions
+
+predict_curve <- function(gas, model){
+  b0 <-model$coefficients[1]
+  b1 <- model$coefficients[2]
+  
+  predicted_curve <- b0 +b1*gas
+  return(as.numeric(predicted_curve))
+}
+
+# creating a vector to put into the linear model
+
+gas_q <- seq(0, 150, length.out = 150)
+
+
+# predict linear Marginal Benefit curves of gasoline for each income group and store as data frames. data frames names are high and low
+
+high <- bind_cols(gas_q = gas_q,
+                  linear_mb = predict_curve(gas_q, model_high), sector = "high")
+
+low <- bind_cols(gas_q = gas_q,
+                  linear_mb = predict_curve(gas_q, model_low), sector = "low")
+
+predict_mb_gas <- bind_rows(high, low) #combines the two predicted curves into one data frame
+```
