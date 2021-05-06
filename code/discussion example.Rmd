@@ -1,0 +1,22 @@
+---
+title: "discussions data"
+author: "Danielle Sclafani"
+date: "5/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(janitor)
+```
+
+# Linear Model Estimatin and Surplus Calculation
+
+```{r}
+disc_data <- read_csv(here("data", "ESM204_week6_data.csv")) %>% 
+  clean_names()
+```
+
+

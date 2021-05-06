@@ -24,7 +24,7 @@ plot_data <- data %>%
 
 scatter_demand <- ggplot(data = plot_data, aes(y = price_dollars, x = gallons_demanded)) + geom_point()+
   facet_wrap(~income_group)+
-  geom_smooth(method = lm)
+  geom_smooth(method = lm) #adding a linear trend line the way i know how to
 
 
 scatter_demand
