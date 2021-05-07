@@ -5,18 +5,137 @@ date: "5/6/2021"
 output: html_document
 ---
 
+## set up the environment
+rm(list=ls())
+options(scipen =999) # this makes it not give us outputs in scientific notation
+gc()
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(here)
 library(tidyverse)
 library(janitor)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(stargazer)
+library(cowplot)
 ```
 
-# Linear Model Estimatin and Surplus Calculation
+# Linear Model Estimation and Surplus Calculation
 
 ```{r}
-disc_data <- read_csv(here("data", "ESM204_week6_data.csv")) %>% 
+demand_data <- read_csv(here("data", "ESM204_week6_data.csv")) %>% 
   clean_names()
+
+demand_data$price # looking at the data
+
+str(demand_data) #structure command- tells us there are 25 observations and 2 columns, they are both in numeric format
+``` 
+
+
+```{r}
+#plot the data
+
+plot_1 <- ggplot(data= demand_data, aes(x=quantity, y = price)) + geom_point()+
+  theme_cowplot(16)
+
+plot_1
 ```
+
+
+## estimating the linear model (model has implied intercept)
+```{r}
+model_demand <- lm(price ~ quantity, data = demand_data) # the linear model assumes the intercept
+
+model_demand$coefficients[1]
+
+model_demand$coefficients[1] # intercept
+model_demand$coefficients[2] # slope
+
+a<- model_demand$coefficients[1] #defining the intercept as 'a'
+b <- model_demand$coefficients[2] # defining the slope as 'b'
+```
+
+
+## add estimated curve to our plot
+```{r}
+price_fitted <- a+ b*demand_data$quantity #making the trendline = estimating the model
+
+plot_1 + geom_line(aes(y=price_fitted, x = quantity)) #adding the trendline into the existing plot
+
+plot_1 + geom_smooth(formula =  y~x, method = "lm", se = F) # this gives us the same linear trend line but it is not stored in R. if we want to use the trendline to calculate things we need it stored so we need to use the price_fitted method above.
+```
+
+
+## Functions in R
+```{r}
+# y = f(x), input x for an output y
+# example function
+function_name <- function(input_1, input_2) {
+  output <- input_1 + input_2
+  return(output) #if you do not include this line it will not spit out the answer
+}
+
+
+#using the function
+
+function_name(1,2) # so here input_1 is 1, and input_2 is 2. Returns the answer 3. R knows that it requires two inputs
+```
+
+
+## finding consumer surplus
+```{r}
+# define two functions first, demand function and inverse demand function
+
+inverse_demand <- function(q, model){
+  p <- model$coefficients[[1]] + model$coefficients[[2]]*q #has a + sign because you do not want to accidentally flip the sign of the slope
+  return(p)
+}
+
+demand <- function(p, model){
+  q <- (p-model$coefficient[[1]]/model$coefficient[[2]])
+  return(q)
+}
+
+demand(0, model_demand) #inputting the quantity, and the model to use and R will spit out the price
+
+inverse_demand(0, model_demand)
+
+demand(inverse_demand(0, model_demand), model_demand)
+```
+
+
+# finding consumer surplus
+
+```{r}
+# consumer surplus, there is some price p*, there is a corresponding q*. we know the top triangle is the CS. CS = 1/2*(p1-p*)*(Q*)
+
+#consumer surplus function
+cs_p <- function(p, model){ # for the price what is the consumer surplus?, because feeding it p you want to use demand function, because demand spits the q
+  q <- demand(p, model)
+  cs <- 0.5*(model$coefficients[[1]]-p)*q
+  return(cs)
+}
+
+cs_q <- function(q, model){
+  p <- inverse_demand(q, model)
+  cs<- 0.5*(model$coefficient[[1]] -p)*q
+  return(cs)
+}
+
+cs_p(125, model_demand)
+```
+
+
+
+
+
+
+
+
+
 
 

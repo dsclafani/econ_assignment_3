@@ -18,7 +18,7 @@ data <- read_csv(here("data", "HW3_data.csv")) %>%
   clean_names()
  
 plot_data <- data %>% 
-  gather(income_group, gallons_demanded, q_low_gallons:q_high_gallons) #gathering data by new column we named income group, and put the inflow from q_low_gallins and q_high_gallons into a new column called gallons_demanded
+  gather(income_group, gallons_demanded, q_low_gallons:q_high_gallons) #gathering data by new column we named income group, and put the inflow from q_low_gallons and q_high_gallons into a new column called gallons_demanded
 
 #plotting the data
 
@@ -67,21 +67,99 @@ predict_mb_gas <- bind_rows(high, low) #combines the two predicted curves into o
 
 
 ```{r}
+a <- model_low$coefficients[[1]] #intercept
+b <- model_low$coefficients[[2]] #slope
+a1 <- model_high$coefficients[[1]] #intercept
+b2 <-model_high$coefficients[[2]] #slope
+```
+
+
+```{r}
 ## Plot predicted Demand curves
 
-ggplot(data = predict_mb_gas, aes(x = gallons_q, y = linear_price)) + geom_line()+
-  facet_wrap(~income_group)
+ggplot(data = predict_mb_gas, aes(x = gallons_q, y = linear_price)) + geom_point(aes(col = "income_group")) +
+  geom_line(data = supply_data, aes(x=gallons_q, y = price))+
+geom_line(data = agg_data, aes(x=gallons_q, y = price)) 
 ```
 
 
 
+```{r}
+# finding the aggregate demand curve
+
+demand_agg <- function(p, model, model2){
+  q <- (p-model$coefficient[[1]]/model$coefficient[[2]]) + (p-model2$coefficient[[1]]/model2$coefficient[[2]])
+  return(q)
+}
+
+demand_inverse_agg<- function(q, model, model2){
+  p <- model$coefficients[[1]] + model$coefficients[[2]]*q + model2$coefficients[[1]] + model2$coefficients[[2]]*q
+  return(p) # dont think this one is accurate
+}
+
+demand_inverse_agg(0,model_low, model_high) # y-intercept? - dont think this is accurate
+
+demand_agg(0,model_low, model_high) # x-intercept
+
+aggregate <- bind_cols(gallons_q = gallons_q,
+                  linear_price = demand_agg(gallons_q, model_high, model_low))
+
+ggplot(data = aggregate, aes(x = gallons_q, y = linear_price)) + geom_point()
+
+```
 
 
+#calculating consumer surplus
+```{r}
+#supply curve : P = 3Q
+
+supply <- function(x){
+  p <- 0.00000499*x
+  return(p)
+}
+
+supply_data <- bind_cols(gallons_q = gallons_q,
+                  price = supply(gallons_q))
+
+#manually putting in the aggregate curve
+man_agg <- function(x){
+  p <- -0.000019*x + 14.6
+  return(p)
+}
+
+agg_data <- bind_cols(gallons_q = gallons_q,
+                  price = man_agg(gallons_q))
+```
 
 
+```{r}
+#finding consumer surplus - input q
+# found where each curve intersects the supply curve
 
+#not with the aggregate
 
+inverse_demand <- function(q, model){
+  p <- model$coefficients[[1]] + model$coefficients[[2]]*q 
+  return(p)
+}
 
+cs_q <- function(q, model){
+  p <- inverse_demand(q, model)
+  cs<- 0.5*(model$coefficient[[1]] -p)*q
+  return(cs)
+}
+
+high_cs <- cs_q(489281, model_high)
+
+high_cs #3,268,863
+
+low_cs <- cs_q(164349, model_low)
+low_cs #892,894.2
+
+total_surplus <- high_cs + low_cs
+
+total_surplus #4,161,757
+```
 
 
 
