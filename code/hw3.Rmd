@@ -78,8 +78,10 @@ b2 <-model_high$coefficients[[2]] #slope
 ## Plot predicted Demand curves
 
 ggplot(data = predict_mb_gas, aes(x = gallons_q, y = linear_price)) + geom_point(aes(col = "income_group")) +
-  geom_line(data = supply_data, aes(x=gallons_q, y = price))+
-geom_line(data = agg_data, aes(x=gallons_q, y = price)) 
+  geom_line(data = supply_data, aes(x=gallons_q, y = price), col = "blue")+
+geom_line(data = agg_data, aes(x=gallons_q, y = price)) +
+  ylim(c(0, 20)) +
+  geom_line(data = supply_tax_data, aes(x=gallons_q, y = price), col = "purple")
 ```
 
 
@@ -129,6 +131,15 @@ man_agg <- function(x){
 
 agg_data <- bind_cols(gallons_q = gallons_q,
                   price = man_agg(gallons_q))
+
+
+supply_tax <- function(x){
+  p <- 0.00000499*x +0.45
+  return(p)
+}
+
+supply_tax_data <- bind_cols(gallons_q = gallons_q,
+                  price = supply_tax(gallons_q))
 ```
 
 
